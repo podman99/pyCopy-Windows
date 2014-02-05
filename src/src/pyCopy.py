@@ -132,7 +132,7 @@ if __name__ == "__main__":
         copy.runCopy()
         copy.PrintFinish()
     elif len(sys.argv) == 2:
-        copy = pyCopy(sys.argv)
+        copy = PyCopy(sys.argv)
         copy.debug()
         copy.runCopy()
         copy.PrintFinish()

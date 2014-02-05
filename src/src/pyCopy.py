@@ -22,8 +22,8 @@ class PyCopy:
     dircount = 0
     
     def __init__(self, args):
-        print "argCount: ", len(args)
-        print "String: ", str(sys.argv)
+        print("argCount:" + str(len(args)))
+        print("String:" + str(sys.argv))
         self.src = sys.argv[1]
         if len(args) == 3:
             self.dst = sys.argv[2]
@@ -32,15 +32,15 @@ class PyCopy:
         
     
     def debug(self):
-        print "Printing Destination: ", self.dst
+        print("Printing Destination: " + self.dst)
 
 
         if self.src == False:
-            print "SRC is False!"
+            print("SRC is False!")
             sys.exit(9)
             
         if self.dst == False:
-            print "DST is False!"
+            print("DST is False!")
             sys.exit(9)
     
     def checkSrc(self):
@@ -52,11 +52,11 @@ class PyCopy:
         
     def runCopy(self):
         if self.checkSrc() == False:
-            print "Src is not a directory"
+            print("Src is not a directory")
             sys.exit(9)
             
         if self.checkDst() == False:
-            print "Dst is not a directory"
+            print("Dst is not a directory")
             sys.exit(9)
             
         self.copyTree(self.src, self.dst + "\\Backup")
@@ -72,9 +72,14 @@ class PyCopy:
 
         try:
             os.makedirs(dst)
-        except OSError, e:
+        except FileExistsError as e:
+            print("\t\tDoes directory exist already?")
+        except OSError as e:
             if e[0] != 0:
-                print str(e)
+                print(str(e))
+        except WinError as e:
+            print("\t\tDoes directory exist already?")
+        
         
         for name in names:
             if name in ignored_names:
@@ -85,9 +90,10 @@ class PyCopy:
                 if symlinks and os.path.islink(srcname):
                     linkto = os.readlink(srcname)
                     os.symlink(linkto, dstname)
-                    print "Creating Link: ", srcname, "\t---> " , dstname
+                    print("Creating Link: " + str(self.sensibleString(srcname)))
+                    print("\t---> " + str(self.sensibleString(dstname)))
                 elif os.path.isdir(srcname):
-                    print "Traversing Directory: ", srcname, "\t---> " , dstname
+                    print("Traversing Directory: " + str(self.sensibleString(srcname)))
                     self.dircount = self.dircount + 1
                     self.copyTree(srcname, dstname, symlinks, ignore)
                 else:
@@ -97,33 +103,43 @@ class PyCopy:
                     else:
                         dsttime = 0
                     if srctime != dsttime:
-                        print "Copying: ", srcname, "\t---> " , dstname
+                        print("Copying: " + str(self.sensibleString(srcname)))
+                        print("\t---> " + str(self.sensibleString(dstname)))
                         shutil.copy2(srcname, dstname)
                         self.completecount = self.completecount + 1
                         self.bytecount = self.bytecount + os.path.getsize(srcname)
                     else:
                         self.skipcount = self.skipcount + 1
-                        print "SKIPPING: ", srcname, "\t---> " , dstname, "\tFile Exists"
+                        print("SKIPPING: " + str(self.sensibleString(srcname)))
+                        print("\t---> " + str(self.sensibleString(dstname)))
+                        print("\tFile Exists")
                 # XXX What about devices, sockets etc.?
-            except IOError, e:
+            except IOError as e:
                 errors.append((srcname, dstname, str(e)))
             # catch the Error from the recursive copytree so that we can
             # continue with other files
-            except OSError, e:
+            except OSError as e:
                 errors.extend(e.args[0])
         
         if errors:
             raise Error(errors)
 
+    def sensibleString(self, string):
+        if len(string) > 50:
+            info = "..." + string[len(string) - 50:]
+        else:
+            info = string
+        return info
+
     def PrintFinish(self):
-        print ""
-        print ""
-        print "-----------------------------------------------"
-        print "Copied Files:\t\t", self.completecount
-        print "Total Mb:\t\t", self.bytecount / 1024 / 1024
-        print "Skipped Files:\t\t", self.skipcount
-        print "Number of Directories:\t", self.dircount
-        print "-----------------------------------------------"
+        print("")
+        print("")
+        print("-----------------------------------------------")
+        print("Copied Files:\t\t" + str(self.completecount))
+        print("Total Mb:\t\t" + str(self.bytecount / 1024 / 1024))
+        print("Skipped Files:\t\t" + str(self.skipcount))
+        print("Number of Directories:\t" + str(self.dircount))
+        print("-----------------------------------------------")
 
 if __name__ == "__main__":
     if len(sys.argv) == 3:
@@ -137,10 +153,7 @@ if __name__ == "__main__":
         copy.runCopy()
         copy.PrintFinish()
     else:
-        print "Number of Arguments: ", len(sys.argv)
-        print "argument list", str(sys.argv)
-    
-    
-    
-    
-    
+        print("Number of Arguments: " + str(len(sys.argv)))
+        print("Requires at least a src directory.")
+        print("")
+        print("./pyCopy.py src dst")
